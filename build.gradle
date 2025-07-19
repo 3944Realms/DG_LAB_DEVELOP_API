@@ -1,0 +1,90 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+group = project_group
+version = project_version
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.realityforge.org.jetbrains.annotations', name: 'org.jetbrains.annotations', version: '1.7.0'
+}
+
+jar {
+    manifest.attributes([
+            "FMLModType": "GAMELIBRARY"
+    ])
+}
+sourceSets {
+    main {
+        java.srcDir 'src/main/java'
+        resources {
+            srcDirs 'src/main/resources'
+        }
+        runtimeClasspath += compileClasspath
+    }
+}
+
+// 打包sourcesJar任务
+tasks.register('sourcesJar', Jar) {
+    dependsOn classes
+
+    from sourceSets.main.allSource
+}
+
+// 打包javadocJar任务
+tasks.register('javadocJar', Jar) {
+    dependsOn javadoc
+
+    from javadoc.destinationDir
+}
+
+// 解决javadoc打包乱码
+javadoc {
+    options {
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+        title "DG_LAB"
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId project.group
+            artifactId project.name
+            version project.version
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+
+    repositories {
+        maven {
+            name "xqsw"
+            url "https://maven.xiaobuawa.top/"
+            credentials {
+                 username project.findProperty("MAVEN_REPO_USER") ?: "" // 仓库发布用户名
+                 password project.findProperty("MAVEN_REPO_PASS") ?: "" // 仓库发布用户密码
+             }
+        }
+    }
+}
